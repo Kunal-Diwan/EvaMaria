@@ -91,21 +91,42 @@ async def next_page(bot, query):
         off_set = offset - 10
     if n_offset == 0:
         btn.append(
-            [InlineKeyboardButton("⏪ BACK", callback_data=f"next_{req}_{key}_{off_set}"),
-             InlineKeyboardButton(f"📃 Pages {math.ceil(int(offset) / 10) + 1} / {math.ceil(total / 10)}",
-                                  callback_data="pages")]
+            [
+                InlineKeyboardButton(
+                    "⏪ BACK", callback_data=f"next_{req}_{key}_{off_set}"
+                ),
+                InlineKeyboardButton(
+                    f"📃 Pages {math.ceil(offset / 10) + 1} / {math.ceil(total / 10)}",
+                    callback_data="pages",
+                ),
+            ]
         )
     elif off_set is None:
         btn.append(
-            [InlineKeyboardButton(f"🗓 {math.ceil(int(offset) / 10) + 1} / {math.ceil(total / 10)}", callback_data="pages"),
-             InlineKeyboardButton("NEXT ⏩", callback_data=f"next_{req}_{key}_{n_offset}")])
+            [
+                InlineKeyboardButton(
+                    f"🗓 {math.ceil(offset / 10) + 1} / {math.ceil(total / 10)}",
+                    callback_data="pages",
+                ),
+                InlineKeyboardButton(
+                    "NEXT ⏩", callback_data=f"next_{req}_{key}_{n_offset}"
+                ),
+            ]
+        )
     else:
         btn.append(
             [
-                InlineKeyboardButton("⏪ BACK", callback_data=f"next_{req}_{key}_{off_set}"),
-                InlineKeyboardButton(f"🗓 {math.ceil(int(offset) / 10) + 1} / {math.ceil(total / 10)}", callback_data="pages"),
-                InlineKeyboardButton("NEXT ⏩", callback_data=f"next_{req}_{key}_{n_offset}")
-            ],
+                InlineKeyboardButton(
+                    "⏪ BACK", callback_data=f"next_{req}_{key}_{off_set}"
+                ),
+                InlineKeyboardButton(
+                    f"🗓 {math.ceil(offset / 10) + 1} / {math.ceil(total / 10)}",
+                    callback_data="pages",
+                ),
+                InlineKeyboardButton(
+                    "NEXT ⏩", callback_data=f"next_{req}_{key}_{n_offset}"
+                ),
+            ]
         )
     try:
         await query.edit_message_reply_markup(
@@ -265,8 +286,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
             )
         else:
             await query.message.edit_text(
-                f"Some error occurred!!",
-                parse_mode=enums.ParseMode.MARKDOWN
+                "Some error occurred!!", parse_mode=enums.ParseMode.MARKDOWN
             )
         return await query.answer('Piracy Is Crime')
     elif "deletecb" in query.data:
@@ -283,8 +303,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
             )
         else:
             await query.message.edit_text(
-                f"Some error occurred!!",
-                parse_mode=enums.ParseMode.MARKDOWN
+                "Some error occurred!!", parse_mode=enums.ParseMode.MARKDOWN
             )
         return await query.answer('Piracy Is Crime')
     elif query.data == "backcb":
@@ -362,7 +381,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                     chat_id=query.from_user.id,
                     file_id=file_id,
                     caption=f_caption,
-                    protect_content=True if ident == "filep" else False 
+                    protect_content=ident == "filep",
                 )
                 await query.answer('Check PM, I have sent files in pm', show_alert=True)
         except UserIsBlocked:
@@ -398,7 +417,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
             chat_id=query.from_user.id,
             file_id=file_id,
             caption=f_caption,
-            protect_content=True if ident == 'checksubp' else False
+            protect_content=ident == 'checksubp',
         )
     elif query.data == "pages":
         await query.answer()
@@ -622,16 +641,15 @@ async def auto_filter(client, msg, spoll=False):
         if message.text.startswith("/"): return  # ignore commands
         if re.findall("((^\/|^,|^!|^\.|^[\U0001F600-\U000E007F]).*)", message.text):
             return
-        if 2 < len(message.text) < 100:
-            search = message.text
-            files, offset, total_results = await get_search_results(search.lower(), offset=0, filter=True)
-            if not files:
-                if settings["spell_check"]:
-                    return await advantage_spell_chok(msg)
-                else:
-                    return
-        else:
+        if not 2 < len(message.text) < 100:
             return
+        search = message.text
+        files, offset, total_results = await get_search_results(search.lower(), offset=0, filter=True)
+        if not files:
+            if settings["spell_check"]:
+                return await advantage_spell_chok(msg)
+            else:
+                return
     else:
         settings = await get_settings(msg.message.chat.id)
         message = msg.message.reply_to_message  # msg will be callback query
@@ -730,7 +748,7 @@ async def advantage_spell_chok(msg):
     query = re.sub(
         r"\b(pl(i|e)*?(s|z+|ease|se|ese|(e+)s(e)?)|((send|snd|giv(e)?|gib)(\sme)?)|movie(s)?|new|latest|br((o|u)h?)*|^h(e|a)?(l)*(o)*|mal(ayalam)?|t(h)?amil|file|that|find|und(o)*|kit(t(i|y)?)?o(w)?|thar(u)?(o)*w?|kittum(o)*|aya(k)*(um(o)*)?|full\smovie|any(one)|with\ssubtitle(s)?)",
         "", msg.text, flags=re.IGNORECASE)  # plis contribute some common words
-    query = query.strip() + " movie"
+    query = f"{query.strip()} movie"
     g_s = await search_gagala(query)
     g_s += await search_gagala(msg.text)
     gs_parsed = []
@@ -748,9 +766,8 @@ async def advantage_spell_chok(msg):
         reg = re.compile(r"watch(\s[a-zA-Z0-9_\s\-\(\)]*)*\|.*",
                          re.IGNORECASE)  # match something like Watch Niram | Amazon Prime
         for mv in g_s:
-            match = reg.match(mv)
-            if match:
-                gs_parsed.append(match.group(1))
+            if match := reg.match(mv):
+                gs_parsed.append(match[1])
     user = msg.from_user.id if msg.from_user else 0
     movielist = []
     gs_parsed = list(dict.fromkeys(gs_parsed))  # removing duplicates https://stackoverflow.com/a/7961425
